@@ -33,7 +33,7 @@ public class Player{
     }
 
     public void update(Joystick joystick) {
-        MAX_SPEED = 8;
+        MAX_SPEED = 5;
         velocityX = joystick.getActuatorX() * MAX_SPEED;
         velocityY = joystick.getActuatorY() * MAX_SPEED;
         positionX += velocityX;

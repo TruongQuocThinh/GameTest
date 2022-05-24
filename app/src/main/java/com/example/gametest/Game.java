@@ -48,65 +48,19 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         int width = getWidth();
         int height = getHeight();
         Log.i("tagll", String.valueOf(width) + ", " + String.valueOf(height));
-
         createMaze();
     }
 
     private void createMaze() {
         cells = new Cell[COLS][ROWS];
 
-
         for(int x = 0; x < COLS; x++) {
             for (int y = 0; y < ROWS; y++) {
                 cells[x][y] = new Cell(x, y);
+                checkMaze();
             }
         }
 
-    }
-
-    private boolean checkTop(int x, int y){
-        if(cells[x][y].topWall){
-            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
-                return false;
-            }
-            else{
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean checkLeft(int x, int y){
-        if(cells[x][y].leftWall){
-            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, x * cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
-                return false;
-            }
-            else{
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean checkBottom(int x, int y){
-        if(cells[x][y].bottomWall){
-            if(!cells[x][y].checkCollision(x * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x+1)* cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
-                return false;
-            }
-            else{
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean checkRight(int x, int y){
-        if(cells[x][y].rightWall){
-            if(!cells[x][y].checkCollision((x + 1) * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
-                return false;
-            }
-            else{
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -183,6 +137,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawLine((COLS - 1 + 1) * cellSize, (y + 1) * cellSize, (COLS - 1 + 1) * cellSize, y * cellSize, wallPaint);
             cells[COLS - 1][y].setRightWall(true);
         }
+
+
         //cell 0;0
         canvas.drawLine(0 * cellSize, (0 + 1) * cellSize, (0 + 1) * cellSize, (0 + 1) * cellSize, wallPaint);
         cells[0][0].setBottomWall(true);
@@ -275,19 +231,74 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         cells[3][8].setRightWall(true);
     }
 
-
-    public void update() {
-        for(int cols = 0; cols < COLS; cols++){
-            for(int rows = 0; rows < ROWS; rows++){
-                if(!checkTop(cols, rows) && !checkBottom(cols, rows) && !checkLeft(cols, rows) && !checkRight(cols, rows)){
-                    player.update(joystick);
+    private boolean checkTop(int x, int y){
+        if(cells[x][y].topWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkLeft(int x, int y){
+        if(cells[x][y].leftWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, x * cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkBottom(int x, int y){
+        if(cells[x][y].bottomWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x+1)* cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkRight(int x, int y){
+        if(cells[x][y].rightWall){
+            if(!cells[x][y].checkCollision((x + 1) * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkMaze(){
+        double positionXCell = player.positionX/cellSize;
+        double positionYCell = player.positionY/cellSize;
+        for(int cols = (int)positionXCell; cols < COLS; cols++) {
+            for (int rows = (int)positionYCell; rows < ROWS; rows++) {
+                Log.i("length", String.valueOf(cols) + "," + String.valueOf(rows));
+                if (!checkTop(cols, rows) && !checkBottom(cols, rows) && !checkLeft(cols, rows) && !checkRight(cols, rows)){
+                    return false;
                 }
-                else{
-                    player.setPosition(player.positionX, player.positionY, joystick );
+                else {
+                    return true;
                 }
             }
         }
 
+        return false;
+    }
+    public void update() {
+        if(!checkMaze()){
+            player.update(joystick);
+        }
+        else{
+            player.setPosition(player.positionX, player.positionY, joystick );
+        }
         joystick.update();
     }
 }
