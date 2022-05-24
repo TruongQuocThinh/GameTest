@@ -28,6 +28,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Joystick joystick;
     private GameLoop gameLoop;
     private int width ,height;
+    private int c, r;
 
     public Game(Context context) {
         super(context);
@@ -40,14 +41,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         wallPaint = new Paint();
         wallPaint.setColor(Color.WHITE);
         wallPaint.setStrokeWidth(WALL_THICKNESS);
-        joystick = new Joystick(500, 1600, 70, 30);
-        player = new Player(getContext(), 185, 850, 35);
+        joystick = new Joystick(500, 1600, 125, 50);
+        player = new Player(getContext(), 185, 825, 35);
         hint = new Hint( getContext(), 725, 1210, 35);
         setFocusable(true);
 
-        int width = getWidth();
-        int height = getHeight();
-        Log.i("tagll", String.valueOf(width) + ", " + String.valueOf(height));
+        this.c = 0;
+        this.r = 0;
 
         createMaze();
     }
@@ -55,13 +55,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private void createMaze() {
         cells = new Cell[COLS][ROWS];
 
-
         for(int x = 0; x < COLS; x++) {
             for (int y = 0; y < ROWS; y++) {
                 cells[x][y] = new Cell(x, y);
             }
         }
-
     }
 
     private boolean checkTop(int x, int y){
@@ -192,6 +190,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         //cell 3;0
         canvas.drawLine((3 + 1) * cellSize, (0 + 1) * cellSize, (3 + 1)* cellSize, 0 * cellSize, wallPaint );
         cells[3][0].setRightWall(true);
+        //cell 4:0
+        cells[4][0].setLeftWall(true);
+        //cell 1:0
+        cells[1][0].setTopWall(true);
         //cell 1;1
         canvas.drawLine(1 * cellSize, (1 + 1) * cellSize, (1 + 1) * cellSize, (1 + 1) * cellSize, wallPaint);
         cells[1][1].setBottomWall(true);
@@ -200,20 +202,33 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         //cell 2;1
         canvas.drawLine((2 + 1) * cellSize, (1 + 1) * cellSize, (2 + 1)* cellSize, 1 * cellSize, wallPaint );
         cells[2][1].setRightWall(true);
+        cells[2][1].setTopWall(true);
         //cell 3;1
         canvas.drawLine(3 * cellSize, (1 + 1) * cellSize, (3 + 1) * cellSize, (1 + 1) * cellSize, wallPaint);
         cells[3][1].setBottomWall(true);
         canvas.drawLine((3 + 1) * cellSize, (1 + 1) * cellSize, (3 + 1)* cellSize, 1 * cellSize, wallPaint );
         cells[3][1].setRightWall(true);
+        cells[3][1].setLeftWall(true);
+        //cell 4:1
+        cells[4][1].setLeftWall(true);
         //cell 0;2
         canvas.drawLine(0 * cellSize, (2 + 1) * cellSize, (0 + 1) * cellSize, (2 + 1) * cellSize, wallPaint);
         cells[0][2].setBottomWall(true);
         //cell 1;2
         canvas.drawLine((1 + 1) * cellSize, (2 + 1) * cellSize, (1 + 1)* cellSize, 2 * cellSize, wallPaint );
         cells[1][2].setRightWall(true);
+        cells[1][2].setTopWall(true);
         //cell 2;2
         canvas.drawLine(2 * cellSize, (2 + 1) * cellSize, (2 + 1) * cellSize, (2 + 1) * cellSize, wallPaint);
         cells[2][2].setBottomWall(true);
+        cells[2][2].setLeftWall(true);
+        //cell 3:2
+        cells[3][2].setTopWall(true);
+        //cell 2;4
+        canvas.drawLine(2 * cellSize, (4 + 1) * cellSize, (2 + 1) * cellSize, (4 + 1) * cellSize, wallPaint);
+        cells[2][4].setRightWall(true);
+        canvas.drawLine((2 + 1) * cellSize, (4 + 1) * cellSize, (2 + 1)* cellSize, 4 * cellSize, wallPaint );
+        cells[2][4].setBottomWall(true);
         //cell 1;3
         canvas.drawLine(1 * cellSize, (3 + 1) * cellSize, (1 + 1) * cellSize, (3 + 1) * cellSize, wallPaint);
         cells[1][3].setRightWall(true);
@@ -225,11 +240,6 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         //cell 4;3
         canvas.drawLine(4 * cellSize, (3 + 1) * cellSize, (4 + 1) * cellSize, (3 + 1) * cellSize, wallPaint);
         cells[4][3].setBottomWall(true);
-        //cell 2;4
-        canvas.drawLine(2 * cellSize, (4 + 1) * cellSize, (2 + 1) * cellSize, (4 + 1) * cellSize, wallPaint);
-        cells[2][4].setRightWall(true);
-        canvas.drawLine((2 + 1) * cellSize, (4 + 1) * cellSize, (2 + 1)* cellSize, 4 * cellSize, wallPaint );
-        cells[2][4].setBottomWall(true);
         //cell 0;5
         canvas.drawLine((0 + 1) * cellSize, (5 + 1) * cellSize, (0 + 1)* cellSize, 5 * cellSize, wallPaint );
         cells[0][5].setRightWall(true);
@@ -275,16 +285,35 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         cells[3][8].setRightWall(true);
     }
 
+    private void bounds(int c, int r){
+        if (c < 0) {
+            c = 0;
+        }
+        if (r < 0) {
+            r = 0;
+        }
+        if (c > COLS - 1) {
+            c = COLS - 1;
+        }
+        if (r > ROWS - 1) {
+            r = ROWS - 1;
+        }
+    }
 
     public void update() {
-        for(int cols = 0; cols < COLS; cols++){
-            for(int rows = 0; rows < ROWS; rows++){
-                if(!checkTop(cols, rows) && !checkBottom(cols, rows) && !checkLeft(cols, rows) && !checkRight(cols, rows)){
-                    player.update(joystick);
-                }
-                else{
-                    player.setPosition(player.positionX, player.positionY, joystick );
-                }
+//        Log.e("player", player.positionX + ", " + player.positionY);
+        c = (int)Math.floor((player.positionX - hMargin)/cellSize);
+        r = (int)Math.floor((player.positionY - vMargin)/cellSize);
+//        Log.i("cell", "[" + c + "][" + r + "]");
+
+        bounds(c, r);
+
+        if (c < COLS || r < ROWS) {
+            if(!checkTop(c, r) && !checkBottom(c, r) && !checkLeft(c, r) && !checkRight(c, r)){
+                player.update(joystick);
+            }
+            else{
+                player.setPosition(player.positionX, player.positionY, joystick);
             }
         }
 
