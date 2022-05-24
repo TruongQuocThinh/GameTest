@@ -2,9 +2,6 @@ package com.example.gametest;
 
 import static com.google.android.material.math.MathUtils.dist;
 
-import android.content.Context;
-import android.graphics.Canvas;
-
 import androidx.constraintlayout.solver.widgets.Rectangle;
 
 public class Cell extends Rectangle {
@@ -12,8 +9,8 @@ public class Cell extends Rectangle {
     public boolean leftWall = false;
     public boolean bottomWall = false;
     public boolean rightWall = false;
-    public double col;
-    public double row;
+    public int col;
+    public int row;
 
     public void setTopWall(boolean topWall) {
         this.topWall = topWall;
@@ -30,6 +27,7 @@ public class Cell extends Rectangle {
     public void setRightWall(boolean rightWall) {
         this.rightWall = rightWall;
     }
+
 
     public Cell(int col, int row){
         this.col = col;
