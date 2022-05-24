@@ -4,12 +4,17 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+
+import java.util.List;
+
+import javax.sql.RowSet;
 
 public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Hint hint;
@@ -43,11 +48,36 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private void createMaze() {
         cells = new Cell[COLS][ROWS];
 
-        for(int x = 0; x < COLS; x++){
-            for(int y = 0; y < ROWS; y++){
+        for(int x = 0; x < COLS; x++) {
+            for (int y = 0; y < ROWS; y++) {
                 cells[x][y] = new Cell(x, y);
             }
         }
+
+    }
+
+    private boolean checkMaze(){
+        for(int x = 0; x < COLS; x++ ){
+            for(int y = 0; y < ROWS; y++){
+                if(cells[x][y].topWall == 0 && cells[x][y].bottomWall == 0){
+                    if(!cells[x][y].checkCollision(x * cellSize, y * cellSize, (x + 1)* cellSize, y * cellSize,player.positionX, player.positionY, player.radius) && !cells[x][y].checkCollision(x * cellSize, (y + 1) * cellSize, (x+1)* cellSize, (y + 1) * cellSize,player.positionX, player.positionY, player.radius)){
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+                /*if(cells[x][y].bottomWall == 0){
+                    if(cells[x][y].checkCollision(x * cellSize, (y + 1) * cellSize, (x+1)* cellSize, (y + 1) * cellSize,player.positionX, player.positionY, player.radius)){
+                        return false;
+                    }
+                    else{
+                        return true;
+                    }
+                }*/
+            }
+        }
+        return false;
     }
 
     @Override
@@ -108,19 +138,22 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         canvas.translate(hMargin, vMargin);
 
         for(int x = 0; x < COLS; x++ ){
-            if(cells[x][0].topWall){
+            if(cells[x][0].topWall == 0){
                 canvas.drawLine(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize, wallPaint );
+                cells[x][0].checkCollision(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize,player.positionX, player.positionY, player.radius);
             }
-            if(cells[x][ROWS - 1].bottomWall){
+            if(cells[x][ROWS - 1].bottomWall == 0){
                 canvas.drawLine(x * cellSize, (ROWS - 1 + 1) * cellSize, (x+1)* cellSize, (ROWS - 1 + 1) * cellSize, wallPaint );
+                cells[x][ROWS - 1].checkCollision(x * cellSize, (ROWS - 1 + 1) * cellSize, (x+1)* cellSize, (ROWS - 1 + 1) * cellSize,player.positionX, player.positionY, player.radius);
+
             }
         }
 
         for(int y = 0; y < ROWS; y++){
-            if(cells[0][y].leftWall){
+            if(cells[0][y].leftWall == 0){
                 canvas.drawLine(0 * cellSize, y * cellSize, 0 * cellSize, (y + 1) * cellSize, wallPaint );
             }
-            if(cells[COLS - 1][y].rightWall){
+            if(cells[COLS - 1][y].rightWall == 0){
                 canvas.drawLine((COLS - 1 + 1) * cellSize, (y + 1) * cellSize, (COLS - 1 + 1)* cellSize, y * cellSize, wallPaint );
             }
         }
@@ -193,7 +226,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 
     public void update() {
-        player.update(joystick);
+        if(!checkMaze()){
+            player.update(joystick);
+            Log.i("pos", player.positionX + "," + player.positionY);
+        }
+        else{
+            player.setPosition(player.positionX, player.positionY, joystick );
+        }
         joystick.update();
     }
 }
