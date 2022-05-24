@@ -8,12 +8,28 @@ import android.graphics.Canvas;
 import androidx.constraintlayout.solver.widgets.Rectangle;
 
 public class Cell extends Rectangle {
-    public double topWall = 0;
-    public double leftWall = 0;
-    public double bottomWall = 0;
-    public double rightWall = 0;
+    public boolean topWall = false;
+    public boolean leftWall = false;
+    public boolean bottomWall = false;
+    public boolean rightWall = false;
     public double col;
     public double row;
+
+    public void setTopWall(boolean topWall) {
+        this.topWall = topWall;
+    }
+
+    public void setLeftWall(boolean leftWall) {
+        this.leftWall = leftWall;
+    }
+
+    public void setBottomWall(boolean bottomWall) {
+        this.bottomWall = bottomWall;
+    }
+
+    public void setRightWall(boolean rightWall) {
+        this.rightWall = rightWall;
+    }
 
     public Cell(int col, int row){
         this.col = col;

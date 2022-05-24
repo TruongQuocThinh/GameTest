@@ -33,7 +33,7 @@ public class Player{
     }
 
     public void update(Joystick joystick) {
-        MAX_SPEED = 5;
+        MAX_SPEED = 8;
         velocityX = joystick.getActuatorX() * MAX_SPEED;
         velocityY = joystick.getActuatorY() * MAX_SPEED;
         positionX += velocityX;
@@ -77,7 +77,6 @@ public class Player{
         }
         //player đi phải
         if (positionX > 0) {
-            MAX_SPEED = 0;
             this.positionX = positionX - velocityX;
             this.positionY = positionY;
             //player đi phải + lên
@@ -93,7 +92,6 @@ public class Player{
         }
         //player đi trái
         else {
-            MAX_SPEED = 0;
             this.positionX = positionX + velocityX;
             this.positionY = positionY;
             //player đi trái + lên

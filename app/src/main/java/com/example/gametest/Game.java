@@ -9,6 +9,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
 
 import androidx.annotation.NonNull;
 
@@ -20,12 +21,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Hint hint;
     private Cell[][] cells;
     private static final int COLS = 5, ROWS = 10;
-    private static final float WALL_THICKNESS = 5;
+    private static final float WALL_THICKNESS = 7;
     private float cellSize, hMargin, vMargin;
     private Paint wallPaint;
     private final Player player;
     private final Joystick joystick;
     private GameLoop gameLoop;
+    private int width ,height;
+
     public Game(Context context) {
         super(context);
 
@@ -37,16 +40,21 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         wallPaint = new Paint();
         wallPaint.setColor(Color.WHITE);
         wallPaint.setStrokeWidth(WALL_THICKNESS);
-        joystick = new Joystick(500, 1950, 70, 30);
-        player = new Player(getContext(), 185, 850, 40);
-        hint = new Hint( getContext(), 725, 1210, 40);
+        joystick = new Joystick(500, 1600, 70, 30);
+        player = new Player(getContext(), 185, 850, 35);
+        hint = new Hint( getContext(), 725, 1210, 35);
         setFocusable(true);
+
+        int width = getWidth();
+        int height = getHeight();
+        Log.i("tagll", String.valueOf(width) + ", " + String.valueOf(height));
 
         createMaze();
     }
 
     private void createMaze() {
         cells = new Cell[COLS][ROWS];
+
 
         for(int x = 0; x < COLS; x++) {
             for (int y = 0; y < ROWS; y++) {
@@ -56,25 +64,46 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
     }
 
-    private boolean checkMaze(){
-        for(int x = 0; x < COLS; x++ ){
-            for(int y = 0; y < ROWS; y++){
-                if(cells[x][y].topWall == 0 && cells[x][y].bottomWall == 0){
-                    if(!cells[x][y].checkCollision(x * cellSize, y * cellSize, (x + 1)* cellSize, y * cellSize,player.positionX, player.positionY, player.radius) && !cells[x][y].checkCollision(x * cellSize, (y + 1) * cellSize, (x+1)* cellSize, (y + 1) * cellSize,player.positionX, player.positionY, player.radius)){
-                        return false;
-                    }
-                    else{
-                        return true;
-                    }
-                }
-                /*if(cells[x][y].bottomWall == 0){
-                    if(cells[x][y].checkCollision(x * cellSize, (y + 1) * cellSize, (x+1)* cellSize, (y + 1) * cellSize,player.positionX, player.positionY, player.radius)){
-                        return false;
-                    }
-                    else{
-                        return true;
-                    }
-                }*/
+    private boolean checkTop(int x, int y){
+        if(cells[x][y].topWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkLeft(int x, int y){
+        if(cells[x][y].leftWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, y * cellSize + vMargin, x * cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkBottom(int x, int y){
+        if(cells[x][y].bottomWall){
+            if(!cells[x][y].checkCollision(x * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x+1)* cellSize + hMargin, (y + 1) * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
+            }
+        }
+        return false;
+    }
+    private boolean checkRight(int x, int y){
+        if(cells[x][y].rightWall){
+            if(!cells[x][y].checkCollision((x + 1) * cellSize + hMargin, (y + 1) * cellSize + vMargin, (x + 1)* cellSize + hMargin, y * cellSize + vMargin,player.positionX, player.positionY, player.radius + 12)){
+                return false;
+            }
+            else{
+                return true;
             }
         }
         return false;
@@ -123,8 +152,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         player.draw(canvas);
         joystick.draw(canvas);
         hint.draw(canvas);
-        int width = getWidth();
-        int height = getHeight();
+
+        width = getWidth();
+        height = getHeight();
 
         if(width/height < COLS/ROWS){
             cellSize = width / (COLS + 1);
@@ -136,103 +166,128 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         vMargin = (float) ((height - ROWS*cellSize)/10);
 
         canvas.translate(hMargin, vMargin);
-
         for(int x = 0; x < COLS; x++ ){
-            if(cells[x][0].topWall == 0){
-                canvas.drawLine(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize, wallPaint );
-                cells[x][0].checkCollision(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize,player.positionX, player.positionY, player.radius);
-            }
-            if(cells[x][ROWS - 1].bottomWall == 0){
-                canvas.drawLine(x * cellSize, (ROWS - 1 + 1) * cellSize, (x+1)* cellSize, (ROWS - 1 + 1) * cellSize, wallPaint );
-                cells[x][ROWS - 1].checkCollision(x * cellSize, (ROWS - 1 + 1) * cellSize, (x+1)* cellSize, (ROWS - 1 + 1) * cellSize,player.positionX, player.positionY, player.radius);
-
-            }
+            //vien tren
+            canvas.drawLine(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize, wallPaint );
+            cells[x][0].setTopWall(true);
+            //vien duoi
+            canvas.drawLine(x * cellSize, (ROWS - 1 + 1) * cellSize, (x+1)* cellSize, (ROWS - 1 + 1) * cellSize, wallPaint );
+            cells[x][ROWS - 1].setBottomWall(true);
         }
 
-        for(int y = 0; y < ROWS; y++){
-            if(cells[0][y].leftWall == 0){
-                canvas.drawLine(0 * cellSize, y * cellSize, 0 * cellSize, (y + 1) * cellSize, wallPaint );
-            }
-            if(cells[COLS - 1][y].rightWall == 0){
-                canvas.drawLine((COLS - 1 + 1) * cellSize, (y + 1) * cellSize, (COLS - 1 + 1)* cellSize, y * cellSize, wallPaint );
-            }
+        for(int y = 0; y < ROWS; y++) {
+            //vien trai
+            canvas.drawLine(0 * cellSize, y * cellSize, 0 * cellSize, (y + 1) * cellSize, wallPaint);
+            cells[0][y].setLeftWall(true);
+            //vien phai
+            canvas.drawLine((COLS - 1 + 1) * cellSize, (y + 1) * cellSize, (COLS - 1 + 1) * cellSize, y * cellSize, wallPaint);
+            cells[COLS - 1][y].setRightWall(true);
         }
         //cell 0;0
         canvas.drawLine(0 * cellSize, (0 + 1) * cellSize, (0 + 1) * cellSize, (0 + 1) * cellSize, wallPaint);
+        cells[0][0].setBottomWall(true);
         //cell 2;0
         canvas.drawLine(2 * cellSize, (0 + 1) * cellSize, (2 + 1) * cellSize, (0 + 1) * cellSize, wallPaint);
+        cells[2][0].setBottomWall(true);
         //cell 3;0
         canvas.drawLine((3 + 1) * cellSize, (0 + 1) * cellSize, (3 + 1)* cellSize, 0 * cellSize, wallPaint );
+        cells[3][0].setRightWall(true);
         //cell 1;1
         canvas.drawLine(1 * cellSize, (1 + 1) * cellSize, (1 + 1) * cellSize, (1 + 1) * cellSize, wallPaint);
+        cells[1][1].setBottomWall(true);
         canvas.drawLine((1 + 1) * cellSize, (1 + 1) * cellSize, (1 + 1)* cellSize, 1 * cellSize, wallPaint );
+        cells[1][1].setRightWall(true);
         //cell 2;1
         canvas.drawLine((2 + 1) * cellSize, (1 + 1) * cellSize, (2 + 1)* cellSize, 1 * cellSize, wallPaint );
+        cells[2][1].setRightWall(true);
         //cell 3;1
         canvas.drawLine(3 * cellSize, (1 + 1) * cellSize, (3 + 1) * cellSize, (1 + 1) * cellSize, wallPaint);
+        cells[3][1].setBottomWall(true);
         canvas.drawLine((3 + 1) * cellSize, (1 + 1) * cellSize, (3 + 1)* cellSize, 1 * cellSize, wallPaint );
-        //cell 4;1
-        canvas.drawLine((4 + 1) * cellSize, (1 + 1) * cellSize, (4 + 1)* cellSize, 1 * cellSize, wallPaint );
+        cells[3][1].setRightWall(true);
         //cell 0;2
         canvas.drawLine(0 * cellSize, (2 + 1) * cellSize, (0 + 1) * cellSize, (2 + 1) * cellSize, wallPaint);
+        cells[0][2].setBottomWall(true);
         //cell 1;2
         canvas.drawLine((1 + 1) * cellSize, (2 + 1) * cellSize, (1 + 1)* cellSize, 2 * cellSize, wallPaint );
+        cells[1][2].setRightWall(true);
         //cell 2;2
         canvas.drawLine(2 * cellSize, (2 + 1) * cellSize, (2 + 1) * cellSize, (2 + 1) * cellSize, wallPaint);
+        cells[2][2].setBottomWall(true);
         //cell 1;3
         canvas.drawLine(1 * cellSize, (3 + 1) * cellSize, (1 + 1) * cellSize, (3 + 1) * cellSize, wallPaint);
+        cells[1][3].setRightWall(true);
         canvas.drawLine((1 + 1) * cellSize, (3 + 1) * cellSize, (1 + 1)* cellSize, 3 * cellSize, wallPaint );
+        cells[1][3].setBottomWall(true);
         //cell 3;3
         canvas.drawLine(3 * cellSize, (3 + 1) * cellSize, (3 + 1) * cellSize, (3 + 1) * cellSize, wallPaint);
+        cells[3][3].setBottomWall(true);
         //cell 4;3
         canvas.drawLine(4 * cellSize, (3 + 1) * cellSize, (4 + 1) * cellSize, (3 + 1) * cellSize, wallPaint);
-        canvas.drawLine((4 + 1) * cellSize, (3 + 1) * cellSize, (4 + 1)* cellSize, 3 * cellSize, wallPaint );
+        cells[4][3].setBottomWall(true);
         //cell 2;4
         canvas.drawLine(2 * cellSize, (4 + 1) * cellSize, (2 + 1) * cellSize, (4 + 1) * cellSize, wallPaint);
+        cells[2][4].setRightWall(true);
         canvas.drawLine((2 + 1) * cellSize, (4 + 1) * cellSize, (2 + 1)* cellSize, 4 * cellSize, wallPaint );
+        cells[2][4].setBottomWall(true);
         //cell 0;5
         canvas.drawLine((0 + 1) * cellSize, (5 + 1) * cellSize, (0 + 1)* cellSize, 5 * cellSize, wallPaint );
+        cells[0][5].setRightWall(true);
         //cell 1;5
         canvas.drawLine((1 + 1) * cellSize, (5 + 1) * cellSize, (1 + 1)* cellSize, 5 * cellSize, wallPaint );
+        cells[1][5].setRightWall(true);
         //cell 3;5
         canvas.drawLine(3 * cellSize, (5 + 1) * cellSize, (3 + 1) * cellSize, (5 + 1) * cellSize, wallPaint);
-        //cell 4;5
-        canvas.drawLine((4 + 1) * cellSize, (5 + 1) * cellSize, (4 + 1)* cellSize, 5 * cellSize, wallPaint );
+        cells[3][5].setBottomWall(true);
         //cell 0;6
         canvas.drawLine((0 + 1) * cellSize, (6 + 1) * cellSize, (0 + 1)* cellSize, 6 * cellSize, wallPaint );
+        cells[0][6].setRightWall(true);
         canvas.drawLine(0 * cellSize, (6 + 1) * cellSize, (0 + 1) * cellSize, (6 + 1) * cellSize, wallPaint);
+        cells[0][6].setBottomWall(true);
         //cell 2;6
         canvas.drawLine((2 + 1) * cellSize, (6 + 1) * cellSize, (2 + 1)* cellSize, 6 * cellSize, wallPaint );
+        cells[2][6].setRightWall(true);
         canvas.drawLine(2 * cellSize, (6 + 1) * cellSize, (2 + 1) * cellSize, (6 + 1) * cellSize, wallPaint);
+        cells[2][6].setBottomWall(true);
         //cell 3;6
         canvas.drawLine((3 + 1) * cellSize, (6 + 1) * cellSize, (3 + 1)* cellSize, 6 * cellSize, wallPaint );
-        //cell 3;8
-        canvas.drawLine((3 + 1) * cellSize, (8 + 1) * cellSize, (3 + 1)* cellSize, 8 * cellSize, wallPaint );
+        cells[3][6].setRightWall(true);
         //cell 4;6
         canvas.drawLine(4 * cellSize, (6 + 1) * cellSize, (4 + 1) * cellSize, (6 + 1) * cellSize, wallPaint);
+        cells[4][6].setBottomWall(true);
         //cell 0;7
         canvas.drawLine((0 + 1) * cellSize, (7 + 1) * cellSize, (0 + 1)* cellSize, 7 * cellSize, wallPaint );
+        cells[0][7].setRightWall(true);
         //cell 1;7
         canvas.drawLine((1 + 1) * cellSize, (7 + 1) * cellSize, (1 + 1)* cellSize, 7 * cellSize, wallPaint );
+        cells[1][7].setRightWall(true);
         //cell 2;7
-        canvas.drawLine(2 * cellSize, 7 * cellSize, (2 + 1)* cellSize, 7 * cellSize, wallPaint );
         canvas.drawLine((2 + 1) * cellSize, (7 + 1) * cellSize, (2 + 1)* cellSize, 7 * cellSize, wallPaint );
+        cells[2][7].setRightWall(true);
         //cell 4;7
-        canvas.drawLine((4 + 1) * cellSize, (7 + 1) * cellSize, (4 + 1)* cellSize, 7 * cellSize, wallPaint );
         canvas.drawLine(4 * cellSize, (7 + 1) * cellSize, (4 + 1) * cellSize, (7 + 1) * cellSize, wallPaint);
+        cells[4][7].setBottomWall(true);
         //cell 2;8
         canvas.drawLine((2 + 1) * cellSize, (8 + 1) * cellSize, (2 + 1)* cellSize, 8 * cellSize, wallPaint );
+        cells[2][8].setRightWall(true);
+        //cell 3;8
+        canvas.drawLine((3 + 1) * cellSize, (8 + 1) * cellSize, (3 + 1)* cellSize, 8 * cellSize, wallPaint );
+        cells[3][8].setRightWall(true);
     }
 
 
     public void update() {
-        if(!checkMaze()){
-            player.update(joystick);
-            Log.i("pos", player.positionX + "," + player.positionY);
+        for(int cols = 0; cols < COLS; cols++){
+            for(int rows = 0; rows < ROWS; rows++){
+                if(!checkTop(cols, rows) && !checkBottom(cols, rows) && !checkLeft(cols, rows) && !checkRight(cols, rows)){
+                    player.update(joystick);
+                }
+                else{
+                    player.setPosition(player.positionX, player.positionY, joystick );
+                }
+            }
         }
-        else{
-            player.setPosition(player.positionX, player.positionY, joystick );
-        }
+
         joystick.update();
     }
 }
