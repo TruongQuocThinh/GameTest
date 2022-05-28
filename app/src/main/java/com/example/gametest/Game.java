@@ -12,6 +12,10 @@ import android.view.View;
 import android.view.Window;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+
+import com.example.gametest.graphics.Animator;
+import com.example.gametest.graphics.SpriteSheet;
 
 import java.util.List;
 
@@ -21,7 +25,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Hint hint;
     private Cell[][] cells;
     private static final int COLS = 5, ROWS = 10;
-    private static final float WALL_THICKNESS = 7;
+    private static final float WALL_THICKNESS = 5;
     private float cellSize, hMargin, vMargin;
     private Paint wallPaint;
     private final Player player;
@@ -29,6 +33,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private GameLoop gameLoop;
     private int width ,height;
     private int c, r;
+    private int[][] map;
 
     public Game(Context context) {
         super(context);
@@ -42,7 +47,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         wallPaint.setColor(Color.WHITE);
         wallPaint.setStrokeWidth(WALL_THICKNESS);
         joystick = new Joystick(525, 1950, 70, 30);
-        player = new Player(getContext(), 185, 825, 35);
+        SpriteSheet spriteSheet = new SpriteSheet(context);
+        Animator animator = new Animator(spriteSheet.getPlayerSpriteArray());
+        player = new Player(getContext(), 185, 825, 35, animator);
         hint = new Hint( getContext(), 725, 1210, 35);
         setFocusable(true);
 
@@ -50,6 +57,21 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         this.r = 0;
 
         createMaze();
+    }
+
+    private void setMap() {
+        map = new int[COLS][ROWS];
+
+        map[0][0] = 842; map[1][0] = 8; map[2][0] = 82; map[3][0] = 86; map[4][0] = 486; //0
+        map[0][1] = 84; map[1][1] = 62; map[2][1] = 486; map[3][1] = 426; map[4][1] = 46; //1
+        map[0][2] = 42; map[1][2] = 86; map[2][2] = 42; map[3][2] = 8; map[4][2] = 6; //2
+        map[0][3] = 48; map[1][3] = 26; map[2][3] = 48; map[3][3] = 2; map[4][3] = 26; //3
+        map[0][4] = 4; map[1][4] = 8; map[2][4] = 26; map[3][4] = 48; map[4][4] = 86; //4
+        map[0][5] = 46; map[1][5] = 46; map[2][5] = 48; map[3][5] = 2; map[4][5] = 6; //5
+        map[0][6] = 46; map[1][6] = 4; map[2][6] = 26; map[3][6] = 486; map[4][6] = 426; //6
+        map[0][7] = 486; map[1][7] = 46; map[2][7] = 486; map[3][7] = 4; map[4][7] = 286; //7
+        map[0][8] = 4; map[1][8] = 0; map[2][8] = 6; map[3][8] = 46; map[4][8] = 486; //8
+        map[0][9] = 42; map[1][9] = 26; map[2][9] = 42; map[3][9] = 2; map[4][9] = 26; //9
     }
 
     private void createMaze() {
@@ -60,6 +82,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
                 cells[x][y] = new Cell(x, y);
             }
         }
+        setMap();
     }
 
     private boolean checkTop(int x, int y){
@@ -164,7 +187,51 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         vMargin = (float) ((height - ROWS*cellSize)/10);
 
         canvas.translate(hMargin, vMargin);
-        for(int x = 0; x < COLS; x++ ){
+
+        if (c < COLS && r < ROWS) {
+            for (int x = 0; x < COLS; x++) {
+                for (int y = 0; y < ROWS; y++) {
+                    if ((x == c) && (y == r)) {
+                        for (int i = x - 1; i <= x + 1; i++) {
+                            for (int j = y - 1; j <= y +1; j++) {
+                                if (i < 0) {
+                                    continue;
+                                }
+                                if (j < 0) {
+                                    continue;
+                                }
+                                if (i >= COLS) {
+                                    continue;
+                                }
+                                if (j >= ROWS) {
+                                    continue;
+                                }
+                                if (map[i][j] == 0) {
+                                    continue;
+                                }
+                                if (String.valueOf(map[i][j]).contains("2")) {
+                                    canvas.drawLine(i * cellSize, (j + 1) * cellSize, (i + 1) * cellSize, (j + 1) * cellSize, wallPaint);
+                                    cells[i][j].setBottomWall(true);
+                                }
+                                if (String.valueOf(map[i][j]).contains("4")) {
+                                    canvas.drawLine(i * cellSize, j * cellSize, i * cellSize, (j + 1) * cellSize, wallPaint);
+                                    cells[i][j].setLeftWall(true);
+                                }
+                                if (String.valueOf(map[i][j]).contains("6")) {
+                                    canvas.drawLine((i + 1) * cellSize, (j + 1) * cellSize, (i + 1) * cellSize, j * cellSize, wallPaint);
+                                    cells[i][j].setRightWall(true);
+                                }
+                                if (String.valueOf(map[i][j]).contains("8")) {
+                                    canvas.drawLine(i * cellSize, j * cellSize, (i + 1) * cellSize, j * cellSize, wallPaint);
+                                    cells[i][j].setTopWall(true);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        /*for(int x = 0; x < COLS; x++ ){
             //vien tren
             canvas.drawLine(x * cellSize, 0 * cellSize, (x + 1)* cellSize, 0 * cellSize, wallPaint );
             cells[x][0].setTopWall(true);
@@ -320,7 +387,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         cells[3][8].setLeftWall(true);
         //cell 4;8
         cells[4][8].setTopWall(true);
-        cells[4][8].setLeftWall(true);
+        cells[4][8].setLeftWall(true);*/
     }
 
     private void bounds(int c, int r){
@@ -349,12 +416,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         if (c < COLS || r < ROWS) {
             if(!checkTop(c, r) && !checkBottom(c, r) && !checkLeft(c, r) && !checkRight(c, r)){
                 player.update(joystick);
+                Log.i("pos:", String.valueOf(player.positionX + ", " + player.positionY));
             }
             else{
                 player.setPosition(player.positionX, player.positionY, joystick);
             }
         }
-
+        if(player.isColliding(player, hint)){
+        }
         joystick.update();
     }
 }

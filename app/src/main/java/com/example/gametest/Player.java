@@ -1,13 +1,14 @@
 package com.example.gametest;
 
-import static com.google.android.material.math.MathUtils.dist;
-
 import android.content.Context;
+import android.gesture.GestureOverlayView;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-import androidx.constraintlayout.solver.widgets.Rectangle;
 import androidx.core.content.ContextCompat;
+
+import com.example.gametest.graphics.Animator;
+import com.example.gametest.graphics.Sprite;
 
 public class Player{
     public final static double MAX_SPEED = 6.5 ;
@@ -17,19 +18,19 @@ public class Player{
     private Paint paint;
     private double velocityX;
     private double velocityY;
+    private Animator animator;
+    private PlayerState playerState;
 
-    public Player(Context context, double positionX, double positionY, double radius) {
+    public Player(Context context, double positionX, double positionY, double radius, Animator animator) {
         this.positionX = positionX;
         this.positionY = positionY;
         this.radius = radius;
-
-        paint = new Paint();
-        int color = ContextCompat.getColor(context, R.color.player);
-        paint.setColor(color);
+        this.animator = animator;
+        this.playerState = new PlayerState(this);
     }
 
     public void draw(Canvas canvas) {
-        canvas.drawCircle((float) positionX, (float) positionY, (float) radius, paint);
+        animator.draw(canvas, this);
     }
 
     public void update(Joystick joystick) {
@@ -37,7 +38,27 @@ public class Player{
         velocityY = joystick.getActuatorY() * MAX_SPEED;
         positionX += velocityX;
         positionY += velocityY;
+        
+        playerState.update();
 
+    }
+
+    /**
+     * isColliding check if two circle objects are colliding, based on their position and radii
+     * @param player
+     * @param hint
+     * @return
+     */
+    public boolean isColliding(Player player, Hint hint){
+        double xDif = positionX - hint.getPositionX();
+        double yDif = positionY - hint.getPositionY();
+        double distanceSquared = xDif * xDif + yDif * yDif;
+        if (distanceSquared < (radius + hint.getRadius()) * (radius + hint.getRadius() - 35)){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     public void setPosition(double positionX, double positionY, Joystick joystick) {
@@ -107,6 +128,17 @@ public class Player{
     }
 
 
+    public PlayerState getPlayerState() {
+        return playerState;
+    }
+
+    public double getVelocityX(){
+        return velocityX;
+    }
+
+    public double getVelocityY(){
+        return velocityY;
+    }
 }
 
 

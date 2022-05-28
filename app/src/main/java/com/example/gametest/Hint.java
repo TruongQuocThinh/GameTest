@@ -23,4 +23,15 @@ public class Hint {
     public void draw(Canvas canvas) {
         canvas.drawCircle((float) positionX, (float) positionY, (float) radius, paint);
     }
+
+    public double getPositionX(){
+        return this.positionX = positionX;
+    }
+    public double getPositionY(){
+        return this.positionY = positionY;
+    }
+
+    public double getRadius(){
+        return this.radius = radius;
+    }
 }
